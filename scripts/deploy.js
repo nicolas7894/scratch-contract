@@ -7,12 +7,14 @@ const hre = require("hardhat");
 const toWei = (value) => ethers.utils.parseEther(value.toString());
 
 async function main() {
+  const tokenAdress = "0x0000000000000000000000000000000000000000";
+
   const keyHash =
     "0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4";
   const fee = toWei(0.0001);
   const linkTokenAddress = "0x326C977E6efc84E512bB9C30f76E30c160eD06FB";
   const vrfCoordinator = "0x8C7382F9D8f56b33781fE506E897a4F1e2d17255";
-  const rangeRandom = 3;
+  const rangeRandom = 1000;
   const erc20Address = "0x326C977E6efc84E512bB9C30f76E30c160eD06FB";
 
   const RandomNumberGenerator = await ethers.getContractFactory(
@@ -42,7 +44,7 @@ async function main() {
 
   const scratcher = await Scratcher.deploy(
     randomNumberGenerator.address,
-    erc20Address,
+    tokenAdress,
     toWei(0.1),
     0,
     rangeRandom

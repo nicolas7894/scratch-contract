@@ -17,6 +17,7 @@ contract Scratcher is ERC20, Ownable, PrizeStrategy{
     }
     PoolState state;
     uint256 public ticketPrice;
+    uint public totalPlayer;
     uint256 public maxPrize;
     address randomNumberGenerator;
     mapping (bytes32 => PlayRequest) playRequest;
@@ -33,6 +34,7 @@ contract Scratcher is ERC20, Ownable, PrizeStrategy{
     modifier canPlayGame() {
         uint256 totalPrize = getTotalPrize();
         uint256 totalReserve = getReserve();
+        require(totalReserve > 0, "reserve is empty");
         require(totalReserve >= totalPrize, "reseve must be bigger or equal to total prize");
         _;
     }
@@ -47,7 +49,6 @@ contract Scratcher is ERC20, Ownable, PrizeStrategy{
         PrizeStrategy(_rangeRandom)
     {
         require(_ticketPrice > 0, "Ticket price should be bigger than zero");
-        require(_token != address(0), "invalid token address");
         tokenAddress = _token;
         ticketPrice = _ticketPrice;
         maxPrize = _maxPrize;
@@ -57,7 +58,11 @@ contract Scratcher is ERC20, Ownable, PrizeStrategy{
     }
 
     function getReserve() public view returns (uint256) {
-        return IERC20(tokenAddress).balanceOf(address(this));
+        if(tokenAddress == address(0)) {
+            return address(this).balance;
+        }else {
+            return IERC20(tokenAddress).balanceOf(address(this));
+        }
     }
 
     function removeLiquidity(uint256 _amount)
@@ -65,29 +70,51 @@ contract Scratcher is ERC20, Ownable, PrizeStrategy{
     {
         uint256 tokenAmount = (getReserve() * _amount) / totalSupply();
         _burn(msg.sender, _amount);
-        IERC20(tokenAddress).transfer(msg.sender, tokenAmount);
+        if(tokenAddress == address(0)) {
+            
+            payable(msg.sender).transfer(_amount);
+        }else {
+
+            IERC20(tokenAddress).transfer(msg.sender, tokenAmount);
+        }
     }
 
 
     function addLiquidity(uint256 _tokenAmount)
         canAddLiquidity
+        payable
         public
     {
-        IERC20 token = IERC20(tokenAddress);
-        require(_tokenAmount > 0, "token amount has to be bigger than zero");
-        require(state == PoolState.Open, "pool is close");
 
-        token.transferFrom(msg.sender, address(this), _tokenAmount );
-        _mint(msg.sender, _tokenAmount);
+        require(state == PoolState.Open, "pool is close");
+        
+        if(tokenAddress == address(0)) {
+
+            _mint(msg.sender, msg.value);
+        }else {
+            require(_tokenAmount > 0, "token amount has to be bigger than zero");
+            IERC20 token = IERC20(tokenAddress);
+            token.transferFrom(msg.sender, address(this), _tokenAmount);
+            _mint(msg.sender, _tokenAmount);
+        }
     }
 
     function playGame(uint[] memory _selectedNumber) 
+        payable
         public canPlayGame 
     {
         require(_selectedNumber.length == lengthOfRange(), "number submited wrong format");
         state = PoolState.pending;
-        IERC20 token = IERC20(tokenAddress);
-        token.transferFrom(msg.sender, address(this), ticketPrice);
+        totalPlayer += 1;
+        if(tokenAddress == address(0)) {
+
+            require(msg.value >= ticketPrice, "ticket price error");
+        }else {
+
+            IERC20 token = IERC20(tokenAddress);
+            token.transferFrom(msg.sender, address(this), ticketPrice);
+        }
+
         bytes32 requestId = RandomNumberGenerator(randomNumberGenerator).request();
         playRequest[requestId] = PlayRequest(msg.sender, _selectedNumber);
         emit NewPlayer(msg.sender, _selectedNumber);
@@ -95,10 +122,16 @@ contract Scratcher is ERC20, Ownable, PrizeStrategy{
 
     function gameResult(bytes32 _requestId, uint256 _randomNumber) onlyRandomGenerator public {
         PlayRequest storage pr = playRequest[_requestId];
-        IERC20 token = IERC20(tokenAddress);
         if(isWinner(pr.submittedNumber, _randomNumber)) {
+            totalPlayer = 0;
             uint256 totalPrize = getTotalPrize();
-            token.transfer(pr.player, totalPrize);
+            if(maxPrize != 0) totalPrize += ticketPrice;
+            if(tokenAddress == address(0)) {
+                payable(pr.player).transfer(totalPrize);
+            }else {
+                IERC20 token = IERC20(tokenAddress);
+                token.transfer(pr.player, totalPrize);
+            }
             state = PoolState.Open;
             emit Winn(pr.player, true, totalPrize);
         } else {

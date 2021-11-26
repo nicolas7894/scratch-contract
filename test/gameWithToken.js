@@ -7,14 +7,15 @@ const fromWei = (value) =>
   );
 const toWei = (value) => ethers.utils.parseEther(value.toString());
 
-describe("Scratcher", function () {
+describe("Scratcher with token", function () {
   let captoken;
   let owner;
   let user;
   let vrfCoordinator;
   let randomNumberGenerator;
+  let tokenAdress;
+  
   before(async function () {
-    [owner, user, user3, user4, user5] = await ethers.getSigners();
     keyHash ="0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4";
     fee = toWei(0.1);
     const LinkToken = await ethers.getContractFactory("LinkToken");
@@ -36,16 +37,12 @@ describe("Scratcher", function () {
     );
     
     await linkToken.transfer(randomNumberGenerator.address, toWei(10));
-  });
-  beforeEach(async function () {
-    const Captoken = await ethers.getContractFactory("Captoken");
-    captoken = await Captoken.deploy(toWei(1000));
-    await captoken.deployed();
-    await captoken.transfer(user.address, toWei(10));
-    await captoken.transfer(user3.address, toWei(10));
-    await captoken.transfer(user4.address, toWei(10));
-    await captoken.transfer(user5.address, toWei(10));
 
+    tokenAdress = "0x0000000000000000000000000000000000000000";
+  });
+
+  beforeEach(async function () {
+    [owner, user, user3, user4, user5] = await ethers.getSigners();
   });
 
   it("It should create a new game lottery and add liquidity", async function () {
@@ -55,17 +52,15 @@ describe("Scratcher", function () {
     const Scratcher = await ethers.getContractFactory("Scratcher", { libraries: { ManipArray: manipArray.address }});
     const scratcher = await Scratcher.deploy(
       randomNumberGenerator.address,
-      captoken.address,
+      tokenAdress,
       toWei(10),
       0,
       rangeRandom
     );
     await scratcher.deployed();
-    await captoken.approve(scratcher.address, toWei(10));
-    await scratcher.addLiquidity(toWei(10));
+    await scratcher.addLiquidity(0, { value: toWei(10) });
 
-    await captoken.connect(user).approve(scratcher.address, toWei(10));
-    await scratcher.connect(user).addLiquidity(toWei(10));
+    await scratcher.connect(user).addLiquidity(0, { value: toWei(10) });
 
     expect(await scratcher.getReserve()).to.equal(toWei(20));
     const balanceOfInvestor = await scratcher.balanceOf(owner.address);
@@ -79,23 +74,20 @@ describe("Scratcher", function () {
     const Scratcher = await ethers.getContractFactory("Scratcher", { libraries: { ManipArray: manipArray.address }});
     const scratcher = await Scratcher.deploy(
       randomNumberGenerator.address,
-      captoken.address,
+      tokenAdress,
       toWei(10),
       0,
       rangeRandom
     );
     await scratcher.deployed();
-    await captoken.approve(scratcher.address, toWei(10));
-    await scratcher.addLiquidity(toWei(10));
+    await scratcher.addLiquidity(0, { value: toWei(10) });
 
-    await captoken.connect(user).approve(scratcher.address, toWei(10));
-    await scratcher.connect(user).addLiquidity(toWei(10));
+    await scratcher.connect(user).addLiquidity(0, { value: toWei(10) });
 
     await scratcher.removeLiquidity(toWei(10));
     const balanceOfInvestor = await scratcher.balanceOf(owner.address);
     expect(balanceOfInvestor).to.equal(toWei(0));
     expect(await scratcher.getReserve()).to.equal(toWei(10));
-    expect(await captoken.balanceOf(owner.address)).to.equal(toWei(960));
   });
 
   it("It should get total prize", async function () {
@@ -105,17 +97,15 @@ describe("Scratcher", function () {
     const Scratcher = await ethers.getContractFactory("Scratcher", { libraries: { ManipArray: manipArray.address }});
     const scratcher = await Scratcher.deploy(
       randomNumberGenerator.address,
-      captoken.address,
+      tokenAdress,
       toWei(10),
       0,
       rangeRandom
     );
     await scratcher.deployed();
-    await captoken.approve(scratcher.address, toWei(10));
-    await scratcher.addLiquidity(toWei(10));
+    await scratcher.addLiquidity(0, { value: toWei(10) });
 
-    await captoken.connect(user).approve(scratcher.address, toWei(10));
-    await scratcher.connect(user).addLiquidity(toWei(10));
+    await scratcher.connect(user).addLiquidity(0, { value: toWei(10) });
 
     expect(await scratcher.getTotalPrize()).to.equal(toWei(20));
   });
@@ -127,20 +117,17 @@ describe("Scratcher", function () {
     const Scratcher = await ethers.getContractFactory("Scratcher", { libraries: { ManipArray: manipArray.address }});
     const scratcher = await Scratcher.deploy(
       randomNumberGenerator.address,
-      captoken.address,
+      tokenAdress,
       toWei(10),
       0,
       rangeRandom
     );
     await scratcher.deployed();
-    await captoken.approve(scratcher.address, toWei(10));
-    await scratcher.addLiquidity(toWei(10));
+    await scratcher.addLiquidity(0, { value: toWei(10) });
 
-    await captoken.connect(user).approve(scratcher.address, toWei(10));
-    await scratcher.connect(user).addLiquidity(toWei(10));
+    await scratcher.connect(user).addLiquidity(0, { value: toWei(10) });
 
-    await captoken.approve(scratcher.address, toWei(10));
-    await scratcher.playGame([1,2,3,3]);
+    await scratcher.playGame([1,2,3,3], { value: toWei(10) });
 
     const lastRequestId = await randomNumberGenerator.lastRequestId();
     await vrfCoordinator.callBackWithRandomness(
@@ -159,32 +146,28 @@ describe("Scratcher", function () {
     const Scratcher = await ethers.getContractFactory("Scratcher", { libraries: { ManipArray: manipArray.address }});
     const scratcher = await Scratcher.deploy(
       randomNumberGenerator.address,
-      captoken.address,
+      tokenAdress,
       toWei(10),
       0,
       rangeRandom
     );
     await scratcher.deployed();
-    await captoken.approve(scratcher.address, toWei(10));
-    await scratcher.addLiquidity(toWei(10));
+    await scratcher.addLiquidity(0, { value: toWei(10) });
 
-    await captoken.connect(user).approve(scratcher.address, toWei(10));
-    await scratcher.connect(user).addLiquidity(toWei(10));
+    await scratcher.connect(user).addLiquidity(0, { value: toWei(10) });
 
-    await captoken.approve(scratcher.address, toWei(10));
-    await captoken.connect(user3).approve(scratcher.address, toWei(10));
-    const balanceBefore = fromWei(await captoken.balanceOf(user3.address))
-    await scratcher.connect(user3).playGame([1, 3, 2, 4]);
+    const balanceBefore = fromWei(await ethers.provider.getBalance(user3.address))
+    await scratcher.connect(user3).playGame([1, 3, 2, 4], { value: toWei(10) });
     const lastRequestId = await randomNumberGenerator.lastRequestId();
-    await vrfCoordinator.callBackWithRandomness(
+    const tx = await vrfCoordinator.callBackWithRandomness(
       lastRequestId,
       "1233",
       randomNumberGenerator.address
     );
-    const balanceAfter = fromWei(await captoken.balanceOf(user3.address))
+    const balanceAfter = fromWei(await ethers.provider.getBalance(user3.address))
 
-    expect(await scratcher.getTotalPrize()).to.equal(toWei(0));
     expect(Math.round(balanceAfter - balanceBefore)).to.equal(20);
+    expect(await scratcher.getTotalPrize()).to.equal(toWei(0));
     expect(await scratcher.getReserve()).to.equal(toWei(0));
   });
 
@@ -197,7 +180,7 @@ describe("Scratcher", function () {
     const Scratcher = await ethers.getContractFactory("Scratcher", { libraries: { ManipArray: manipArray.address }});
     const scratcher = await Scratcher.deploy(
       randomNumberGenerator.address,
-      captoken.address,
+      tokenAdress,
       ticketPrice,
       maxPrize,
       rangeRandom
@@ -205,28 +188,26 @@ describe("Scratcher", function () {
     await scratcher.deployed();
 
     // owner add 10 liquidity
-    await captoken.approve(scratcher.address, toWei(10));
-    await scratcher.addLiquidity(toWei(10));
+    await scratcher.addLiquidity(toWei(10),{ value: toWei(10) } );
 
     // user add 10 liquidity
-    await captoken.connect(user).approve(scratcher.address, toWei(10));
-    await scratcher.connect(user).addLiquidity(toWei(10));
+    await scratcher.connect(user).addLiquidity(0 ,{ value: toWei(10) });
 
     expect(await scratcher.getTotalPrize()).to.equal(toWei(15));
 
-    // user3 play game and win
-    await captoken.connect(user4).approve(scratcher.address, ticketPrice);
+    const balanceBefore = fromWei(await ethers.provider.getBalance(user4.address))
 
-    const balanceBefore = fromWei(await captoken.balanceOf(user4.address))
-    await scratcher.connect(user4).playGame([1,2,3,4]);
+    // user4 play game and win
+    await scratcher.connect(user4).playGame([1,2,3,4], { value: ticketPrice });
+    
     const lastRequestId = await randomNumberGenerator.lastRequestId();
-    await vrfCoordinator.callBackWithRandomness(
+    const tx =  await vrfCoordinator.callBackWithRandomness(
       lastRequestId,
       "1233",
       randomNumberGenerator.address
     );
 
-    const balanceAfter = fromWei(await captoken.balanceOf(user4.address))
+    const balanceAfter = fromWei(await ethers.provider.getBalance(user4.address))
 
     expect(Math.round(balanceAfter - balanceBefore)).to.equal(15);
     expect(await scratcher.getReserve()).to.equal(toWei(5));
@@ -242,7 +223,7 @@ describe("Scratcher", function () {
     const maxPrize = toWei(20);
     const scratcher = await Scratcher.deploy(
       randomNumberGenerator.address,
-      captoken.address,
+      tokenAdress,
       ticketPrice,
       maxPrize,
       rangeRandom
@@ -252,19 +233,16 @@ describe("Scratcher", function () {
 
     // owner add 10 liquidity
     const liquidity1 = toWei(10);
-    await captoken.approve(scratcher.address, liquidity1);
-    await scratcher.addLiquidity(liquidity1);
+    await scratcher.addLiquidity(0, { value: liquidity1 });
 
     // user add 10 liquidity
     const liquidity2 = toWei(10);
-    await captoken.connect(user).approve(scratcher.address, liquidity2);
-    await scratcher.connect(user).addLiquidity(liquidity2);
+    await scratcher.connect(user).addLiquidity(0, { value: liquidity2 });
 
     expect(await scratcher.getReserve()).to.equal(toWei(20));
 
     // user3 play game and win
-    await captoken.connect(user5).approve(scratcher.address, ticketPrice);
-    await scratcher.connect(user5).playGame([1,2,3,4]);
+    await scratcher.connect(user5).playGame([1,2,3,4], { value: ticketPrice });
     const lastRequestId = await randomNumberGenerator.lastRequestId();
     await vrfCoordinator.callBackWithRandomness(
       lastRequestId,
@@ -273,9 +251,8 @@ describe("Scratcher", function () {
     );
 
     // owner play game and win but error
-    await captoken.approve(scratcher.address, toWei(10));
-    await expect(scratcher.playGame([1,2,3,4])).to.be.revertedWith(
-      "reserve is empty"
+    await expect(scratcher.playGame([1,2,3,4], { value: ticketPrice })).to.be.revertedWith(
+      "reseve must be bigger or equal to total prize"
     );
   });
 });
