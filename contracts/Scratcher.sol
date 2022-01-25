@@ -25,6 +25,7 @@ contract Scratcher is ERC20, Ownable, PrizeStrategy{
 
     event Winn(address player, bool winn, uint prize);
     event NewPlayer(address player, uint[] number);
+    event LiquidityAdded(uint quantity);
 
     modifier canAddLiquidity() {
         require(state == PoolState.Open, "pool must be open");
@@ -44,9 +45,9 @@ contract Scratcher is ERC20, Ownable, PrizeStrategy{
 		_;
 	}
 
-    constructor(address _randomNumberGenerator, address _token, uint256 _ticketPrice, uint256 _maxPrize, uint _rangeRandom)
-        ERC20("Scratchy", "SCR")
-        PrizeStrategy(_rangeRandom)
+    constructor(address _randomNumberGenerator, address _token, uint256 _ticketPrice, uint256 _maxPrize, uint _requiredMatching, uint[] memory _listNumber)
+        ERC20("Scratch", "SCR")
+        PrizeStrategy(_requiredMatching, _listNumber)
     {
         require(_ticketPrice > 0, "Ticket price should be bigger than zero");
         tokenAddress = _token;
@@ -54,7 +55,6 @@ contract Scratcher is ERC20, Ownable, PrizeStrategy{
         maxPrize = _maxPrize;
         state = PoolState.Open;
         randomNumberGenerator = _randomNumberGenerator;
-        
     }
 
     function getReserve() public view returns (uint256) {
@@ -91,11 +91,13 @@ contract Scratcher is ERC20, Ownable, PrizeStrategy{
         if(tokenAddress == address(0)) {
 
             _mint(msg.sender, msg.value);
+            emit LiquidityAdded(msg.value);
         }else {
             require(_tokenAmount > 0, "token amount has to be bigger than zero");
             IERC20 token = IERC20(tokenAddress);
             token.transferFrom(msg.sender, address(this), _tokenAmount);
             _mint(msg.sender, _tokenAmount);
+            emit LiquidityAdded(_tokenAmount);
         }
     }
 
@@ -103,7 +105,7 @@ contract Scratcher is ERC20, Ownable, PrizeStrategy{
         payable
         public canPlayGame 
     {
-        require(_selectedNumber.length == lengthOfRange(), "number submited wrong format");
+        require(_selectedNumber.length == requiredMatching, "number submited wrong format");
         state = PoolState.pending;
         totalPlayer += 1;
         if(tokenAddress == address(0)) {

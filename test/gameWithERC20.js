@@ -15,7 +15,7 @@ describe("Scratcher", function () {
   let randomNumberGenerator;
   before(async function () {
     [owner, user, user3, user4, user5] = await ethers.getSigners();
-    keyHash ="0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4";
+    keyHash = "0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4";
     fee = toWei(0.1);
     const LinkToken = await ethers.getContractFactory("LinkToken");
     const linkToken = await LinkToken.deploy();
@@ -34,7 +34,7 @@ describe("Scratcher", function () {
       keyHash,
       fee
     );
-    
+
     await linkToken.transfer(randomNumberGenerator.address, toWei(10));
   });
   beforeEach(async function () {
@@ -49,18 +49,29 @@ describe("Scratcher", function () {
   });
 
   it("It should create a new game lottery and add liquidity", async function () {
+
+    /*** Create scratcher with factory */
     const rangeRandom = 3;
-    const ManipArray = await ethers.getContractFactory("ManipArray");
-    const manipArray = await ManipArray.deploy();
-    const Scratcher = await ethers.getContractFactory("Scratcher", { libraries: { ManipArray: manipArray.address }});
-    const scratcher = await Scratcher.deploy(
-      randomNumberGenerator.address,
+    const listNumber = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    const Factory = await ethers.getContractFactory("Factory");
+    const factory = await Factory.deploy(randomNumberGenerator.address);
+    const scratchAddress = await factory.callStatic.createGame(
       captoken.address,
       toWei(10),
       0,
-      rangeRandom
-    );
-    await scratcher.deployed();
+      rangeRandom,
+      listNumber);
+
+    await factory.createGame(
+      captoken.address,
+      toWei(10),
+      0,
+      rangeRandom,
+      listNumber);
+
+    const Scratcher = await ethers.getContractFactory("Scratcher");
+    const scratcher = await Scratcher.attach(scratchAddress);
+
     await captoken.approve(scratcher.address, toWei(10));
     await scratcher.addLiquidity(toWei(10));
 
@@ -74,15 +85,15 @@ describe("Scratcher", function () {
 
   it("It should remove liquidity", async function () {
     const rangeRandom = 3;
-    const ManipArray = await ethers.getContractFactory("ManipArray");
-    const manipArray = await ManipArray.deploy();
-    const Scratcher = await ethers.getContractFactory("Scratcher", { libraries: { ManipArray: manipArray.address }});
+    const listNumber = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    const Scratcher = await ethers.getContractFactory("Scratcher");
     const scratcher = await Scratcher.deploy(
       randomNumberGenerator.address,
       captoken.address,
       toWei(10),
       0,
-      rangeRandom
+      rangeRandom,
+      listNumber
     );
     await scratcher.deployed();
     await captoken.approve(scratcher.address, toWei(10));
@@ -100,15 +111,15 @@ describe("Scratcher", function () {
 
   it("It should get total prize", async function () {
     const rangeRandom = 3;
-    const ManipArray = await ethers.getContractFactory("ManipArray");
-    const manipArray = await ManipArray.deploy();
-    const Scratcher = await ethers.getContractFactory("Scratcher", { libraries: { ManipArray: manipArray.address }});
+    const listNumber = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    const Scratcher = await ethers.getContractFactory("Scratcher");
     const scratcher = await Scratcher.deploy(
       randomNumberGenerator.address,
       captoken.address,
       toWei(10),
       0,
-      rangeRandom
+      rangeRandom,
+      listNumber
     );
     await scratcher.deployed();
     await captoken.approve(scratcher.address, toWei(10));
@@ -121,16 +132,16 @@ describe("Scratcher", function () {
   });
 
   it("It should play game and loose", async function () {
-    const rangeRandom = 2000;
-    const ManipArray = await ethers.getContractFactory("ManipArray");
-    const manipArray = await ManipArray.deploy();
-    const Scratcher = await ethers.getContractFactory("Scratcher", { libraries: { ManipArray: manipArray.address }});
+    const rangeRandom = 3;
+    const listNumber = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    const Scratcher = await ethers.getContractFactory("Scratcher");
     const scratcher = await Scratcher.deploy(
       randomNumberGenerator.address,
       captoken.address,
       toWei(10),
       0,
-      rangeRandom
+      rangeRandom,
+      listNumber
     );
     await scratcher.deployed();
     await captoken.approve(scratcher.address, toWei(10));
@@ -140,12 +151,12 @@ describe("Scratcher", function () {
     await scratcher.connect(user).addLiquidity(toWei(10));
 
     await captoken.approve(scratcher.address, toWei(10));
-    await scratcher.playGame([1,2,3,3]);
+    await scratcher.playGame([1, 2, 3]);
 
     const lastRequestId = await randomNumberGenerator.lastRequestId();
     await vrfCoordinator.callBackWithRandomness(
       lastRequestId,
-      "7344",
+      "245",
       randomNumberGenerator.address
     );
 
@@ -153,16 +164,16 @@ describe("Scratcher", function () {
   });
 
   it("It should play game and win", async function () {
-    const rangeRandom = 2000;
-    const ManipArray = await ethers.getContractFactory("ManipArray");
-    const manipArray = await ManipArray.deploy();
-    const Scratcher = await ethers.getContractFactory("Scratcher", { libraries: { ManipArray: manipArray.address }});
+    const rangeRandom = 3;
+    const listNumber = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    const Scratcher = await ethers.getContractFactory("Scratcher");
     const scratcher = await Scratcher.deploy(
       randomNumberGenerator.address,
       captoken.address,
       toWei(10),
       0,
-      rangeRandom
+      rangeRandom,
+      listNumber
     );
     await scratcher.deployed();
     await captoken.approve(scratcher.address, toWei(10));
@@ -174,11 +185,11 @@ describe("Scratcher", function () {
     await captoken.approve(scratcher.address, toWei(10));
     await captoken.connect(user3).approve(scratcher.address, toWei(10));
     const balanceBefore = fromWei(await captoken.balanceOf(user3.address))
-    await scratcher.connect(user3).playGame([1, 3, 2, 4]);
+    await scratcher.connect(user3).playGame([7, 2, 3]);
     const lastRequestId = await randomNumberGenerator.lastRequestId();
     await vrfCoordinator.callBackWithRandomness(
       lastRequestId,
-      "1233",
+      "245",
       randomNumberGenerator.address
     );
     const balanceAfter = fromWei(await captoken.balanceOf(user3.address))
@@ -189,18 +200,18 @@ describe("Scratcher", function () {
   });
 
   it("It should play game and win (fixed prize)", async function () {
-    const rangeRandom = 2000;
+    const rangeRandom = 3;
+    const listNumber = [1, 2, 3, 4, 5, 6, 7, 8, 9];
     const ticketPrice = toWei(10);
     const maxPrize = toWei(15);
-    const ManipArray = await ethers.getContractFactory("ManipArray");
-    const manipArray = await ManipArray.deploy();
-    const Scratcher = await ethers.getContractFactory("Scratcher", { libraries: { ManipArray: manipArray.address }});
+    const Scratcher = await ethers.getContractFactory("Scratcher");
     const scratcher = await Scratcher.deploy(
       randomNumberGenerator.address,
       captoken.address,
       ticketPrice,
       maxPrize,
-      rangeRandom
+      rangeRandom,
+      listNumber
     );
     await scratcher.deployed();
 
@@ -218,11 +229,11 @@ describe("Scratcher", function () {
     await captoken.connect(user4).approve(scratcher.address, ticketPrice);
 
     const balanceBefore = fromWei(await captoken.balanceOf(user4.address))
-    await scratcher.connect(user4).playGame([1,2,3,4]);
+    await scratcher.connect(user4).playGame([7, 2, 3]);
     const lastRequestId = await randomNumberGenerator.lastRequestId();
     await vrfCoordinator.callBackWithRandomness(
       lastRequestId,
-      "1233",
+      "245",
       randomNumberGenerator.address
     );
 
@@ -234,10 +245,9 @@ describe("Scratcher", function () {
   });
 
   it("It should genare error if pool size < prize", async function () {
-    const rangeRandom = 2000;
-    const ManipArray = await ethers.getContractFactory("ManipArray");
-    const manipArray = await ManipArray.deploy();
-    const Scratcher = await ethers.getContractFactory("Scratcher", { libraries: { ManipArray: manipArray.address }});
+    const rangeRandom = 3;
+    const listNumber = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    const Scratcher = await ethers.getContractFactory("Scratcher");
     const ticketPrice = toWei(5);
     const maxPrize = toWei(20);
     const scratcher = await Scratcher.deploy(
@@ -245,7 +255,8 @@ describe("Scratcher", function () {
       captoken.address,
       ticketPrice,
       maxPrize,
-      rangeRandom
+      rangeRandom,
+      listNumber
     );
     expect(await scratcher.getTotalPrize()).to.equal(maxPrize);
     await scratcher.deployed();
@@ -264,17 +275,17 @@ describe("Scratcher", function () {
 
     // user3 play game and win
     await captoken.connect(user5).approve(scratcher.address, ticketPrice);
-    await scratcher.connect(user5).playGame([1,2,3,4]);
+    await scratcher.connect(user5).playGame([7, 2, 3]);
     const lastRequestId = await randomNumberGenerator.lastRequestId();
     await vrfCoordinator.callBackWithRandomness(
       lastRequestId,
-      "1233",
+      "245",
       randomNumberGenerator.address
     );
 
     // owner play game and win but error
     await captoken.approve(scratcher.address, toWei(10));
-    await expect(scratcher.playGame([1,2,3,4])).to.be.revertedWith(
+    await expect(scratcher.playGame([7, 2, 3])).to.be.revertedWith(
       "reserve is empty"
     );
   });

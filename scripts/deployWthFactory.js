@@ -7,16 +7,11 @@ const hre = require("hardhat");
 const toWei = (value) => ethers.utils.parseEther(value.toString());
 
 async function main() {
-  const tokenAdress = "0x0000000000000000000000000000000000000000";
-
   const keyHash =
     "0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4";
   const fee = toWei(0.0001);
   const linkTokenAddress = "0x326C977E6efc84E512bB9C30f76E30c160eD06FB";
   const vrfCoordinator = "0x8C7382F9D8f56b33781fE506E897a4F1e2d17255";
-  const requiredMatching = 4;
-  const erc20Address = "0x326C977E6efc84E512bB9C30f76E30c160eD06FB";
-  listNumber = [1, 2, 4];
 
   const RandomNumberGenerator = await ethers.getContractFactory(
     "RandomNumberGenerator"
@@ -29,23 +24,15 @@ async function main() {
     fee
   );
 
-  console.log("address randomNumberGenerator : ",randomNumberGenerator.address)
-  
+  console.log("address randomNumberGenerator : ", randomNumberGenerator.address)
+
   await new Promise(r => setTimeout(r, 2000));
 
-  const Scratcher = await ethers.getContractFactory("Scratcher");
+  const Factory = await ethers.getContractFactory("Factory");
+  const factory = await Factory.deploy(randomNumberGenerator.address);
 
-  const scratcher = await Scratcher.deploy(
-    randomNumberGenerator.address,
-    tokenAdress,
-    toWei(0.1),
-    0,
-    requiredMatching,
-    listNumber
-  );
-  await scratcher.deployed();
 
-  console.log("scratcherToken ::", scratcher.address);
+  console.log("factory address  ::", factory.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
