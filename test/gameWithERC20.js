@@ -32,7 +32,7 @@ describe("Scratcher", function () {
       vrfCoordinator.address,
       linkToken.address,
       keyHash,
-      fee
+      fee,
     );
 
     await linkToken.transfer(randomNumberGenerator.address, toWei(10));
@@ -60,14 +60,16 @@ describe("Scratcher", function () {
       toWei(10),
       0,
       rangeRandom,
-      listNumber);
+      listNumber,
+      "0");
 
     await factory.createGame(
       captoken.address,
       toWei(10),
       0,
       rangeRandom,
-      listNumber);
+      listNumber,
+      "0");
 
     const Scratcher = await ethers.getContractFactory("Scratcher");
     const scratcher = await Scratcher.attach(scratchAddress);
@@ -93,7 +95,8 @@ describe("Scratcher", function () {
       toWei(10),
       0,
       rangeRandom,
-      listNumber
+      listNumber,
+      "0"
     );
     await scratcher.deployed();
     await captoken.approve(scratcher.address, toWei(10));
@@ -119,7 +122,8 @@ describe("Scratcher", function () {
       toWei(10),
       0,
       rangeRandom,
-      listNumber
+      listNumber,
+      "0"
     );
     await scratcher.deployed();
     await captoken.approve(scratcher.address, toWei(10));
@@ -141,7 +145,8 @@ describe("Scratcher", function () {
       toWei(10),
       0,
       rangeRandom,
-      listNumber
+      listNumber,
+      "0"
     );
     await scratcher.deployed();
     await captoken.approve(scratcher.address, toWei(10));
@@ -173,7 +178,8 @@ describe("Scratcher", function () {
       toWei(10),
       0,
       rangeRandom,
-      listNumber
+      listNumber,
+      "0"
     );
     await scratcher.deployed();
     await captoken.approve(scratcher.address, toWei(10));
@@ -211,7 +217,8 @@ describe("Scratcher", function () {
       ticketPrice,
       maxPrize,
       rangeRandom,
-      listNumber
+      listNumber,
+      "0"
     );
     await scratcher.deployed();
 
@@ -256,7 +263,8 @@ describe("Scratcher", function () {
       ticketPrice,
       maxPrize,
       rangeRandom,
-      listNumber
+      listNumber,
+      "0"
     );
     expect(await scratcher.getTotalPrize()).to.equal(maxPrize);
     await scratcher.deployed();

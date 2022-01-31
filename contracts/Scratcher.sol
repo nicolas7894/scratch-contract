@@ -19,6 +19,7 @@ contract Scratcher is ERC20, Ownable, PrizeStrategy{
     uint256 public ticketPrice;
     uint public totalPlayer;
     uint256 public maxPrize;
+    string public mode;
     address randomNumberGenerator;
     mapping (bytes32 => PlayRequest) playRequest;
 
@@ -26,6 +27,7 @@ contract Scratcher is ERC20, Ownable, PrizeStrategy{
     event Winn(address player, bool winn, uint prize);
     event NewPlayer(address player, uint[] number);
     event LiquidityAdded(uint quantity);
+    event LiquidityRemoved(uint quantity);
 
     modifier canAddLiquidity() {
         require(state == PoolState.Open, "pool must be open");
@@ -45,7 +47,7 @@ contract Scratcher is ERC20, Ownable, PrizeStrategy{
 		_;
 	}
 
-    constructor(address _randomNumberGenerator, address _token, uint256 _ticketPrice, uint256 _maxPrize, uint _requiredMatching, uint[] memory _listNumber)
+    constructor(address _randomNumberGenerator, address _token, uint256 _ticketPrice, uint256 _maxPrize, uint _requiredMatching, uint[] memory _listNumber, string memory _mode)
         ERC20("Scratch", "SCR")
         PrizeStrategy(_requiredMatching, _listNumber)
     {
@@ -55,6 +57,7 @@ contract Scratcher is ERC20, Ownable, PrizeStrategy{
         maxPrize = _maxPrize;
         state = PoolState.Open;
         randomNumberGenerator = _randomNumberGenerator;
+        mode = _mode;
     }
 
     function getReserve() public view returns (uint256) {
@@ -73,9 +76,11 @@ contract Scratcher is ERC20, Ownable, PrizeStrategy{
         if(tokenAddress == address(0)) {
             
             payable(msg.sender).transfer(_amount);
+            emit LiquidityRemoved(_amount);
         }else {
 
             IERC20(tokenAddress).transfer(msg.sender, tokenAmount);
+            emit LiquidityRemoved(tokenAmount);
         }
     }
 
@@ -117,8 +122,16 @@ contract Scratcher is ERC20, Ownable, PrizeStrategy{
             token.transferFrom(msg.sender, address(this), ticketPrice);
         }
 
-        bytes32 requestId = RandomNumberGenerator(randomNumberGenerator).request();
-        playRequest[requestId] = PlayRequest(msg.sender, _selectedNumber);
+        if(keccak256(abi.encodePacked(mode)) == keccak256(abi.encodePacked("1"))) {
+            
+            bytes32 requestId = bytes32(block.timestamp);
+            playRequest[requestId] = PlayRequest(msg.sender, _selectedNumber);
+            RandomNumberGenerator(randomNumberGenerator).directRequest(requestId);
+        }else {
+            bytes32 requestId = RandomNumberGenerator(randomNumberGenerator).request();
+            playRequest[requestId] = PlayRequest(msg.sender, _selectedNumber);
+        }
+
         emit NewPlayer(msg.sender, _selectedNumber);
     }
 
@@ -140,9 +153,8 @@ contract Scratcher is ERC20, Ownable, PrizeStrategy{
             emit Winn(pr.player, false, 0);
             state = PoolState.Open;
         }
-
     }
-    
+
     function getTotalPrize() public view returns (uint256) {
         uint256 tokenReserve = getReserve();
         if(maxPrize != 0) return maxPrize;

@@ -9,12 +9,12 @@ const fromWei = (value) =>
     typeof value === "string" ? value : value.toString()
   );
 const toWei = (value) => ethers.utils.parseEther(value.toString());
-const randomNumberGeneratorAddress =  "0xe0Dd370de7AE2928108C399C96277C368B02FC2d";
-const scratchTokenAddress = "0x445e3A2D4610b0729af33638d571F79066D056Fc"
+const randomNumberGeneratorAddress =  "0x3a76315CF8521119dac980F466Ef205e96afFc35";
+const scratchTokenAddress = "0xf2d7ac06eb29f25348ca85f2e5f3730f52618406"
 const manipArray = "0xE93eE93db7F419e87c765185AbAE2e8D5E08290C";
 const linkTokenAddress = "0x326C977E6efc84E512bB9C30f76E30c160eD06FB";
 async function main() {
-    const Scratcher = await ethers.getContractFactory("Scratcher", { libraries: { ManipArray: manipArray }});
+    const Scratcher = await ethers.getContractFactory("Scratcher");
     const scratcher = await Scratcher.attach(scratchTokenAddress);
     const LinkToken = await ethers.getContractFactory("LinkToken");
     const linkToken = await LinkToken.attach(linkTokenAddress);
@@ -24,8 +24,15 @@ async function main() {
    // await linkToken.approve(scratchTokenAddress, toWei(10));
    // await scratcher.addLiquidity(0, { value: toWei(1)});
    // const tx = await scratcher.playGame([10]);
-
-    console.log("reserve : ", fromWei(await scratcher.getTotalPrize() ))
+   const totalPrize = await scratcher.getTotalPrize()
+   const totalReserve = await scratcher.getReserve();
+  console.log("totalPrize : ", totalPrize.toString())
+  console.log("totalPrize : ", totalReserve.toString())
+  const data = "0x4e487b710000000000000000000000000000000000000000000000000000000000000012"
+  ethers.utils.defaultAbiCoder.decode(
+    [ 'bytes', 'string' ],
+    hexDataSlice(data, 4)
+)
 }
 
 // We recommend this pattern to be able to use async/await everywhere

@@ -33,7 +33,7 @@ describe("Scratcher with token", function () {
       vrfCoordinator.address,
       linkToken.address,
       keyHash,
-      fee
+      fee,
     );
     
     await linkToken.transfer(randomNumberGenerator.address, toWei(10));
@@ -55,7 +55,8 @@ describe("Scratcher with token", function () {
       toWei(10),
       0,
       requiredMatching,
-      listNumber
+      listNumber,
+      "0"
     );
     await scratcher.deployed();
     await scratcher.addLiquidity(0, { value: toWei(10) });
@@ -77,7 +78,8 @@ describe("Scratcher with token", function () {
       toWei(10),
       0,
       requiredMatching,
-      listNumber
+      listNumber,
+      "0"
     );
     await scratcher.deployed();
     await scratcher.addLiquidity(0, { value: toWei(10) });
@@ -100,7 +102,8 @@ describe("Scratcher with token", function () {
       toWei(10),
       0,
       requiredMatching,
-      listNumber
+      listNumber,
+      "0"    
     );
     await scratcher.deployed();
     await scratcher.addLiquidity(0, { value: toWei(10) });
@@ -120,7 +123,8 @@ describe("Scratcher with token", function () {
       toWei(10),
       0,
       requiredMatching,
-      listNumber
+      listNumber,
+      "0"
     );
     await scratcher.deployed();
     await scratcher.addLiquidity(0, { value: toWei(10) });
@@ -149,7 +153,8 @@ describe("Scratcher with token", function () {
       toWei(10),
       0,
       requiredMatching,
-      listNumber
+      listNumber,
+      "0"
     );
     await scratcher.deployed();
     await scratcher.addLiquidity(0, { value: toWei(10) });
@@ -183,7 +188,8 @@ describe("Scratcher with token", function () {
       ticketPrice,
       maxPrize,
       requiredMatching,
-      listNumber
+      listNumber,
+      "0"
     );
     await scratcher.deployed();
 
@@ -226,7 +232,8 @@ describe("Scratcher with token", function () {
       ticketPrice,
       maxPrize,
       requiredMatching,
-      listNumber
+      listNumber,
+      "0"
     );
     expect(await scratcher.getTotalPrize()).to.equal(maxPrize);
     await scratcher.deployed();
